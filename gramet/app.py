@@ -1,3 +1,5 @@
+# this file is deployed from github on push
+
 from urllib.parse import urlsplit
 from hashlib import sha1
 import base64
