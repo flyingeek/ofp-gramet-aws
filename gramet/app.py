@@ -80,8 +80,8 @@ def lambda_handler(event, context):
     tref_hours = tref / 3600.0
     if (tref_hours - int(tref_hours)) > 0.5:
         tref = (int(tref_hours) + 1) * 3600
-    max_age = now_ts - tref
-    if tref > now_ts:
+    max_age = tref - now_ts
+    if now_ts > tref:
         tref = now_ts
         seconds = tref % 3600
         if (seconds) > 1800:
