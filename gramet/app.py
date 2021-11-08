@@ -80,7 +80,14 @@ def lambda_handler(event, context):
     tref_hours = tref / 3600.0
     if (tref_hours - int(tref_hours)) > 0.5:
         tref = (int(tref_hours) + 1) * 3600
-    tref = max(now_ts, tref)
+    max_age = now_ts - tref
+    if tref > now_ts:
+        tref = now_ts
+        seconds = tref % 3600
+        if (seconds) > 1800:
+            max_age = 3600 - seconds
+        else:
+            max_age = 1800 - seconds
     OGIMET_URL = "http://www.ogimet.com/display_gramet.php?" \
                  "lang=en&hini={hini}&tref={tref}&hfin={hfin}&fl={fl}" \
                  "&hl=3000&aero=yes&wmo={wmo}&submit=submit"
@@ -95,8 +102,11 @@ def lambda_handler(event, context):
     headers['Access-Control-Allow-Origin'] = '*'
     headers["Access-Control-Allow-Headers"] = "X-Requested-With"
     headers["Access-Control-Expose-Headers"] = "ETag, X-ETag, X-ofp2map-status"
+    if (response_dict['statusCode'] == 200):
+         headers['Cache-Control'] = "max-age={}".format(int(max_age * 3600))
     print(name)
     if (response_dict['statusCode'] != 200):
+        headers['Cache-Control'] = "max-age=0"
         headers['X-ofp2map-status'] = response_dict['statusCode']
         print(response_dict['statusCode'])
     if not isinstance(response_dict['statusCode'], int):
