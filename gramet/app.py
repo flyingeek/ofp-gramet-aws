@@ -65,6 +65,8 @@ def fetch_image(url, etag_src):
 
 def lambda_handler(event, context):
     path_parameters = event.get('pathParameters', {})
+    request = event['Records'][0]['cf']['request']
+    conditional_etag = request['headers'].get('if-none-match', None)
     match = re.search(r'^(?P<hini>[^-]+)-(?P<tref>[^-]+)-(?P<hfin>[^-]+)-(?P<fl>[^-]+)-(?P<wmo>[^-]+)__(?P<name>.+)$', path_parameters.get('data', ''))
     if not match:
         return aws_error()
@@ -77,35 +79,45 @@ def lambda_handler(event, context):
     name = match.group('name')
 
     now_ts = int(time.time())
-    tref_hours = tref / 3600.0
-    if (tref_hours - int(tref_hours)) > 0.5:
-        tref = (int(tref_hours) + 1) * 3600
     max_age = min(3600, tref - now_ts)
+    ogimet_tref = tref // 3600
+    seconds = tref % 3600
     if now_ts > tref:
-        tref = now_ts
-        seconds = tref % 3600
+        ogimet_tref = now_ts // 3600
+        seconds = now_ts % 3600
         if (seconds) > 1800:
             max_age = 3600 - seconds
         else:
             max_age = 1800 - seconds
+    if (seconds) > 1800:
+        ogimet_tref += 1
     OGIMET_URL = "http://www.ogimet.com/display_gramet.php?" \
                  "lang=en&hini={hini}&tref={tref}&hfin={hfin}&fl={fl}" \
                  "&hl=3000&aero=yes&wmo={wmo}&submit=submit"
-    url = OGIMET_URL.format(hini=hini, tref=tref, hfin=hfin, fl=fl, wmo=wmo)
-    etag_src = "{hini}&tref={tref}&hfin={hfin}&fl={fl}&wmo={wmo}".format(hini=hini, tref=int(tref / 3600.0), hfin=hfin, fl=fl, wmo=wmo)
-
-
-    response_dict = fetch_image(url, etag_src)
+    url = OGIMET_URL.format(hini=hini, tref=ogimet_tref*3600, hfin=hfin, fl=fl, wmo=wmo)
+    etag_src = "{hini}&tref={tref}&hfin={hfin}&fl={fl}&wmo={wmo}".format(hini=hini, tref=ogimet_tref, hfin=hfin, fl=fl, wmo=wmo)
+    etag = sha1(etag_src.encode('utf-8')).hexdigest()
+    response_dict = {}
+    if ('W/"{etag}"'.format(etag=etag) == conditional_etag):
+        response_dict = {
+            'headers': {
+                "ETag": 'W/"{etag}"'.format(etag=etag),
+                "X-ETag": etag,
+            },
+            'statusCode': 304,
+        }
+    else:
+        response_dict = fetch_image(url, etag_src)
 
     # add CORS headers (on amazon lambda this is already set in the API Gateway/CORS)
     headers = response_dict.get('headers', {})
     headers['Access-Control-Allow-Origin'] = '*'
     headers["Access-Control-Allow-Headers"] = "X-Requested-With"
     headers["Access-Control-Expose-Headers"] = "ETag, X-ETag, X-ofp2map-status"
-    if (response_dict['statusCode'] == 200):
-         headers['Cache-Control'] = "max-age={}".format(max_age)
     print(name)
-    if (response_dict['statusCode'] != 200):
+    if (response_dict['statusCode'] == 200 or response_dict['statusCode'] == 304):
+         headers['Cache-Control'] = "max-age={}".format(max_age)
+    else:
         headers['Cache-Control'] = "max-age=0"
         headers['X-ofp2map-status'] = response_dict['statusCode']
         print(response_dict['statusCode'])
