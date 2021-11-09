@@ -4,7 +4,7 @@ une fonction lambda tournant sur AWS pour récupérer le GRAMET utilisé par OFP
 
 ## Installation
 
-AWS CLI n'est pas nécessaire, le déploiement se fait par les actions Github (La fonction lambda a été crée au préalable dans la console AWS, avec les réglages nécessaire, y compris la couche python39-requests). Pour tester la fonction localement seul SAM CLI doit être installé (et peut être Docker).
+AWS CLI n'est pas nécessaire, le déploiement se fait par les actions Github (La fonction lambda a été crée au préalable dans la console AWS, avec les réglages nécessaire, y compris la couche python39-requests). Pour tester la fonction localement seul SAM CLI doit être installé (et Docker).
 
 ```sh
 brew tap aws/tap

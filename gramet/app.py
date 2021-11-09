@@ -14,7 +14,7 @@ def aws_error(status=400, body='invalid request'):
         'body': json.dumps(body)
     }
 
-def fetch_image(url, etag_src):
+def fetch_image(url, etag):
     url_object = urlsplit(url)
     try:
         r = requests.get(url, timeout=30)
@@ -51,7 +51,7 @@ def fetch_image(url, etag_src):
         return aws_error(body='ogimet returns with status %s' % response.status_code, status=response.status_code)
     if not mimetype.startswith("image/"):
         return aws_error(body='gramet is not an image', status="406 gramet is not an image")
-    etag = sha1(etag_src.encode('utf-8')).hexdigest()
+
     return {
         'headers': {
             "Content-Type": content_type,
@@ -65,8 +65,10 @@ def fetch_image(url, etag_src):
 
 def lambda_handler(event, context):
     path_parameters = event.get('pathParameters', {})
-    request = event['Records'][0]['cf']['request']
-    conditional_etag = request['headers'].get('if-none-match', None)
+    conditional_etag = event.get('headers', {}).get('if-none-match', None)
+    if conditional_etag is None:
+        conditional_etag = event.get('headers', {}).get('If-None-Match', None)
+    print(event.get('headers', {}))
     match = re.search(r'^(?P<hini>[^-]+)-(?P<tref>[^-]+)-(?P<hfin>[^-]+)-(?P<fl>[^-]+)-(?P<wmo>[^-]+)__(?P<name>.+)$', path_parameters.get('data', ''))
     if not match:
         return aws_error()
@@ -107,7 +109,7 @@ def lambda_handler(event, context):
             'statusCode': 304,
         }
     else:
-        response_dict = fetch_image(url, etag_src)
+        response_dict = fetch_image(url, etag)
 
     # add CORS headers (on amazon lambda this is already set in the API Gateway/CORS)
     headers = response_dict.get('headers', {})
