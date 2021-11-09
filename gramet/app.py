@@ -106,6 +106,8 @@ def lambda_handler(event, context):
             'statusCode': 304,
         }
     else:
+        if conditional_etag:
+            print("Conditional Etag {cetag} does not match {etag}".format(cetag=conditional_etag, etag='W/"{etag}"'.format(etag=etag)))
         response_dict = fetch_image(url, etag)
 
     # add CORS headers (on amazon lambda this is already set in the API Gateway/CORS)
