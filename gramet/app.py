@@ -66,9 +66,6 @@ def fetch_image(url, etag):
 def lambda_handler(event, context):
     path_parameters = event.get('pathParameters', {})
     conditional_etag = event.get('headers', {}).get('if-none-match', None)
-    if conditional_etag is None:
-        conditional_etag = event.get('headers', {}).get('If-None-Match', None)
-    print(event.get('headers', {}))
     match = re.search(r'^(?P<hini>[^-]+)-(?P<tref>[^-]+)-(?P<hfin>[^-]+)-(?P<fl>[^-]+)-(?P<wmo>[^-]+)__(?P<name>.+)$', path_parameters.get('data', ''))
     if not match:
         return aws_error()
