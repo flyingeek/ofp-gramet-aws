@@ -11,6 +11,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Find and Replace API TOKEN - Using Build Variable
+      run: find gramet/*.py -type f -exec sed -i ''s/{GOATCOUNTER}/${{ secrets.GOATCOUNTER }}/g'' {} \;
     - name: deploy app.py
       uses: appleboy/lambda-action@master
       with:
