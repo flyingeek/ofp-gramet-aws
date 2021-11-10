@@ -120,12 +120,11 @@ def lambda_handler(event, context):
              print(name.replace('Route_', 'Cache_'))
          else:
              print(name)
-         print(response_dict['statusCode'])
     else:
         headers['Cache-Control'] = "max-age=0"
         headers['X-ofp2map-status'] = response_dict['statusCode']
         print(name)
-        print(response_dict['statusCode'])
+    print(response_dict['statusCode'])
     if not isinstance(response_dict['statusCode'], int):
         try:
             response_dict['statusCode'] = int(response_dict['statusCode'].split()[0])
