@@ -114,12 +114,17 @@ def lambda_handler(event, context):
     headers['Access-Control-Allow-Origin'] = '*'
     headers["Access-Control-Allow-Headers"] = "X-Requested-With"
     headers["Access-Control-Expose-Headers"] = "ETag, X-ETag, X-ofp2map-status"
-    print(name)
     if (response_dict['statusCode'] == 200 or response_dict['statusCode'] == 304):
          headers['Cache-Control'] = "max-age={}".format(max_age)
+         if (response_dict['statusCode'] == 304):
+             print(name.replace('Route_', 'Cache_'))
+         else:
+             print(name)
+         print(response_dict['statusCode'])
     else:
         headers['Cache-Control'] = "max-age=0"
         headers['X-ofp2map-status'] = response_dict['statusCode']
+        print(name)
         print(response_dict['statusCode'])
     if not isinstance(response_dict['statusCode'], int):
         try:
