@@ -133,9 +133,11 @@ def lambda_handler(event, context):
     response_dict['headers'] = headers
     #count requests
     goat_token = '{GOATCOUNTER}'
-    goat_url = 'https://ofp2map.goatcounter.com/count?p=/{status}'.format(status=response_dict['statusCode'])
+    goat_url = 'https://ofp2map.goatcounter.com/api/v0/count'
+    goat_headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer {token}'.format(token=goat_token)}
+    goat_payload = '{"no_sessions": true, "hits": [{"path": "/%s"}]}' % response_dict['statusCode']
     try:
-        requests.get(goat_url, timeout=2)
+        requests.post(goat_url, data=goat_payload, headers=goat_headers)
     except:
         pass
     return response_dict
