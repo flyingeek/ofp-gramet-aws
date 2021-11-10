@@ -131,4 +131,10 @@ def lambda_handler(event, context):
         except ValueError:
             response_dict['statusCode'] = 500
     response_dict['headers'] = headers
+    #count requests
+    goat_url = 'https://ofp2map.goatcounter.com/count?p=/{status}'.format(status=response_dict['statusCode'])
+    try:
+        requests.get(goat_url, timeout=2)
+    except:
+        pass
     return response_dict
