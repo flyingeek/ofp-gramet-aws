@@ -129,13 +129,21 @@ def lambda_handler(event, context):
         except ValueError:
             response_dict['statusCode'] = 500
     response_dict['headers'] = headers
-    #count requests
+    # count requests
     goat_token = '{GOATCOUNTER}'
     goat_url = 'https://ofp2map.goatcounter.com/api/v0/count'
     goat_headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer {token}'.format(token=goat_token)}
-    goat_payload = '{"no_sessions": true, "hits": [{"path": "/%s"}]}' % response_dict['statusCode']
+    goat_payload = {
+        'no_sessions': True,
+        'hits': [{'path': '/%s' % response_dict['statusCode']}],
+    }
+    goat_placeholder = '{' + 'GOATCOUNTER' + '}'
+    if goat_token == goat_placeholder:
+        print('goatcounter token placeholder was not replaced during deploy')
     try:
-        requests.post(goat_url, data=goat_payload, headers=goat_headers)
-    except:
-        pass
+        goat_response = requests.post(goat_url, json=goat_payload, headers=goat_headers, timeout=8)
+        if goat_response.status_code >= 400:
+            print('goatcounter HTTP error', goat_response.status_code, goat_response.text[:300])
+    except requests.RequestException as exc:
+        print('goatcounter request failed:', str(exc))
     return response_dict
