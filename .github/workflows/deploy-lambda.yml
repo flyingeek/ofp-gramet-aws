@@ -10,14 +10,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
     - name: Find and Replace API TOKEN - Using Build Variable
-      run: find gramet/*.py -type f -exec sed -i ''s/{GOATCOUNTER}/${{ secrets.GOATCOUNTER }}/g'' {} \;
-    - name: deploy app.py
+      run: find gramet -name "*.py" -type f -exec sed -i "s|{GOATCOUNTER}|${{ secrets.GOATCOUNTER }}|g" {} +
+    - name: Build Lambda package
+      run: |
+        rm -rf package lambda.zip
+        mkdir -p package
+        pip install -r gramet/requirements.txt -t package
+        cp gramet/app.py package/
+        cd package
+        zip -r ../lambda.zip .
+    - name: Deploy lambda package
       uses: appleboy/lambda-action@master
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_region: ${{ secrets.AWS_REGION }}
         function_name: gramet
-        source: gramet/app.py
+        source: lambda.zip

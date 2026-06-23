@@ -16,7 +16,7 @@ Resources:
     Properties:
       CodeUri: gramet/
       Handler: app.lambda_handler
-      Runtime: python3.9
+      Runtime: python3.14
       Events:
         Gramet:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
