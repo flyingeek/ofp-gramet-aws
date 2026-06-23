@@ -14,7 +14,7 @@ def aws_error(status=400, body='invalid request'):
         'body': json.dumps(body)
     }
 
-def fetch_image(url, etag):
+def fetch_image(url, etag, tref):
     url_object = urlsplit(url)
     try:
         r = requests.get(url, timeout=30)
@@ -57,6 +57,7 @@ def fetch_image(url, etag):
             "Content-Type": content_type,
             "ETag": 'W/"{etag}"'.format(etag=etag),
             "X-ETag": etag,
+            "X-Gramet-Timestamp": str(int(tref))
         },
         'statusCode': response.status_code,
         'body': base64.b64encode(response.content).decode('utf-8'),
@@ -104,7 +105,7 @@ def lambda_handler(event, context):
         }
         print("304 Not modified")
     else:
-        response_dict = fetch_image(url, etag)
+        response_dict = fetch_image(url, etag, tref)
 
     # add CORS headers (on amazon lambda this is already set in the API Gateway/CORS)
     headers = response_dict.get('headers', {})
