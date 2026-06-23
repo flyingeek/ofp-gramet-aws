@@ -65,29 +65,26 @@ def fetch_image(url, etag):
 
 def lambda_handler(event, context):
     path_parameters = event.get('pathParameters', {})
+    query_parameters = event.get('queryStringParameters') or {}
+    takeoff = query_parameters.get('takeoff', None)
     conditional_etag = event.get('headers', {}).get('if-none-match', None)
     match = re.search(r'^(?P<hini>[^-]+)-(?P<tref>[^-]+)-(?P<hfin>[^-]+)-(?P<fl>[^-]+)-(?P<wmo>[^-]+)__(?P<name>.+)$', path_parameters.get('data', ''))
     if not match:
         return aws_error()
 
     hini = int(match.group('hini'))
-    tref = int(match.group('tref'))
+    tref = int(match.group('tref')) if takeoff is None else int(takeoff)
     hfin = int(match.group('hfin'))
     fl = int(match.group('fl'))
     wmo = match.group('wmo')
     name = match.group('name')
 
     now_ts = int(time.time())
-    max_age = min(3600, tref - now_ts)
+    if (time.gmtime(tref).tm_year, time.gmtime(tref).tm_yday) < (time.gmtime(now_ts).tm_year, time.gmtime(now_ts).tm_yday):
+        tref = now_ts
+    max_age = 3600 if now_ts > tref else min(3600, tref - now_ts)
     ogimet_tref = tref // 3600
     seconds = tref % 3600
-    if now_ts > tref:
-        ogimet_tref = now_ts // 3600
-        seconds = now_ts % 3600
-        if (seconds) > 1800:
-            max_age = 3600 - seconds
-        else:
-            max_age = 1800 - seconds
     if (seconds) > 1800:
         ogimet_tref += 1
     OGIMET_URL = "http://www.ogimet.com/display_gramet.php?" \
