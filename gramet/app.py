@@ -111,7 +111,7 @@ def lambda_handler(event, context):
     headers = response_dict.get('headers', {})
     headers['Access-Control-Allow-Origin'] = '*'
     headers["Access-Control-Allow-Headers"] = "X-Requested-With"
-    headers["Access-Control-Expose-Headers"] = "ETag, X-ETag, X-ofp2map-status"
+    headers["Access-Control-Expose-Headers"] = "ETag, X-ETag, X-ofp2map-status, X-Gramet-Timestamp"
     if (response_dict['statusCode'] == 200 or response_dict['statusCode'] == 304):
          headers['Cache-Control'] = "max-age={}".format(max_age)
          if (response_dict['statusCode'] == 304):
