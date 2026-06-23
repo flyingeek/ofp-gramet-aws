@@ -142,6 +142,7 @@ def lambda_handler(event, context):
         print('goatcounter token placeholder was not replaced during deploy')
     try:
         goat_response = requests.post(goat_url, json=goat_payload, headers=goat_headers, timeout=8)
+        print('goatcounter status', goat_response.status_code)
         if goat_response.status_code >= 400:
             print('goatcounter HTTP error', goat_response.status_code, goat_response.text[:300])
     except requests.RequestException as exc:
